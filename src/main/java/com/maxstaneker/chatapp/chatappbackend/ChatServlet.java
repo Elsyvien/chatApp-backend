@@ -28,7 +28,7 @@ public class ChatServlet extends HttpServlet {
         String sender = request.getParameter("sender");
         String content = request.getParameter("content");
 
-        if (sender != null && content != null) {
+        if (sender != null && content != null && !sender.trim().isEmpty() && !content.trim().isEmpty()) {
             Message message = new Message(sender, content, System.currentTimeMillis());
             messages.add(message);
             System.out.println("Message received: " + message.getContent() + " from " + message.getSender());
