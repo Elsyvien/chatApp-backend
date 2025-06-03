@@ -8,7 +8,7 @@ public class Message {
     public Message(String sender, String content, long timestamp) {
         this.sender = sender;
         this.content = content;
-        this.timestamp = System.currentTimeMillis();
+        this.timestamp = timestamp;
     }
 
     public String getSender() {
