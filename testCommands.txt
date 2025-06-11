@@ -1,2 +1,4 @@
 curl -X POST   http://localhost:8081/Gradle___com_maxstaneker_chatapp___chatApp_backend_1_0_SNAPSHOT_war/chatapp/chat   -d "sender=Max&content=Hallo Welt!"
+curl -X POST   http://localhost:8080/Gradle___com_maxstaneker_chatapp___chatApp_backend_1_0_SNAPSHOT_war/chat   -d "sender=Max&content=Hallo Welt!"
+
 
