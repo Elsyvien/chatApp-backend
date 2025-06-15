@@ -1,9 +1,11 @@
 package model;
 
 public class Message {
+
     private String sender;
     private String content;
     private long timestamp;
+
 
     public Message(String sender, String content, long timestamp) {
         this.sender = sender;
