@@ -9,12 +9,16 @@ import model.Message;
 
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
+
 import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * WebSocket endpoint for broadcasting chat messages between clients.
+ * <p>
+ * The endpoint sends and receives JSON encoded {@link Message} objects using
+ * Yasson for serialization.
  */
 @ServerEndpoint("/chat")
 public class ChatWebSocket {
@@ -25,6 +29,7 @@ public class ChatWebSocket {
     private static final Set<Session> sessions = new CopyOnWriteArraySet<>();
 
     private static final Jsonb jsonb = JsonbBuilder.create();
+
 
     /**
      * Adds a newly opened session to the active session set.
@@ -37,9 +42,9 @@ public class ChatWebSocket {
     }
 
     /**
-     * Receives a message from a client and broadcasts it to all connected
-     * sessions. Incoming JSON is deserialized to a {@link Message} and the
-     * server adds a timestamp before rebroadcasting.
+     * Receives a JSON representation of a {@link Message} from a client and
+     * broadcasts it to all connected sessions. The server ensures a timestamp is
+     * set before sending the message to every open WebSocket session.
      *
      * @param messageJson the incoming message in JSON format
      * @param session     the WebSocket session that sent the message
@@ -48,7 +53,6 @@ public class ChatWebSocket {
     public void onMessage(String messageJson, Session session) {
         try {
             Message message = jsonb.fromJson(messageJson, Message.class);
-            // Ensure a timestamp is set for the broadcasted message
             Message broadcast = new Message(message.getSender(), message.getContent(), System.currentTimeMillis());
             String json = jsonb.toJson(broadcast);
             for (Session s : sessions) {
