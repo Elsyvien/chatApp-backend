@@ -16,9 +16,10 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * WebSocket endpoint for broadcasting chat messages between clients.
- * <p>
+ *
  * The endpoint sends and receives JSON encoded {@link Message} objects using
  * Yasson for serialization.
+ * @author Max Staneker, Mia Schienagel
  */
 @ServerEndpoint("/chat")
 public class ChatWebSocket {
