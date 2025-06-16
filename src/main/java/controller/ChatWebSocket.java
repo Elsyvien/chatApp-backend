@@ -23,7 +23,6 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 @ServerEndpoint("/chat")
 public class ChatWebSocket {
-
     /**
      * Active WebSocket sessions connected to this endpoint.
      */
@@ -40,6 +39,8 @@ public class ChatWebSocket {
     @OnOpen
     public void onOpen(Session session) {
         sessions.add(session);
+        session.setMaxIdleTimeout(0); // 0 = keine Idle-Timeouts
+        System.out.println("[Server] Client connected: " + session.getId());
     }
 
     /**
@@ -52,20 +53,26 @@ public class ChatWebSocket {
      */
     @OnMessage
     public void onMessage(String messageJson, Session session) {
+        System.out.println("[Server] Raw JSON: " + messageJson);
         try {
             Message message = jsonb.fromJson(messageJson, Message.class);
-            Message broadcast = new Message(message.getSender(), message.getContent(), System.currentTimeMillis());
+            System.out.println("[Server] Parsed: sender=" + message.getSender() + ", content=" + message.getContent());
+            Message broadcast = new Message(
+                    message.getSender(),
+                    message.getContent(),
+                    System.currentTimeMillis()
+            );
             String json = jsonb.toJson(broadcast);
             for (Session s : sessions) {
                 if (s.isOpen()) {
                     s.getBasicRemote().sendText(json);
                 }
             }
+            System.out.println("Broadcasting message: " + broadcast.getContent() + " from " + broadcast.getSender());
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
     /**
      * Removes the session from the active session set once the connection is
      * closed.

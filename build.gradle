@@ -33,6 +33,9 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
+
+    implementation("jakarta.json.bind:jakarta.json.bind-api:3.0.0")
+    implementation("org.eclipse:yasson:3.0.3")
 }
 
 test {
