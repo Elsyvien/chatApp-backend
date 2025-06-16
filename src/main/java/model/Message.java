@@ -1,8 +1,13 @@
 package model;
 
+import jakarta.json.bind.annotation.JsonbProperty;
+
 public class Message {
+    @JsonbProperty("sender")
     private String sender;
+    @JsonbProperty("content")
     private String content;
+    @JsonbProperty("timestamp")
     private long timestamp;
 
     // Default constructor

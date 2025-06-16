@@ -63,6 +63,7 @@ public class ChatWebSocket {
                     System.currentTimeMillis()
             );
             String json = jsonb.toJson(broadcast);
+            System.out.println("[Server] SENDING JSON: " + json);
             for (Session s : sessions) {
                 if (s.isOpen()) {
                     s.getBasicRemote().sendText(json);
