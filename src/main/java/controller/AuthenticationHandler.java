@@ -39,7 +39,7 @@ public class AuthenticationHandler {
         if (challenge == null) return false;
 
         // TODO: Load real public key from DB for the user:
-        BigInteger n = new BigInteger("your_public_n_here");
+        BigInteger n = new BigInteger("42000"); // DEBUG
         BigInteger e = new BigInteger("65537");
         BigInteger signature = new BigInteger(signatureHex, 16);
 
