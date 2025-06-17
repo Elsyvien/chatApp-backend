@@ -24,7 +24,7 @@ public class AuthenticationHandler {
     }
 
     public void initializeSession(Session session) {
-        challenges.put(session, null);
+
         authenticatedSessions.put(session, false);
     }
 
