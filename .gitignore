@@ -43,4 +43,7 @@ bin/
 ### Mac OS ###
 .DS_Store
 
+### User Data ###
+/data/users.txt
+
 
