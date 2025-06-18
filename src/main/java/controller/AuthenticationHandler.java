@@ -39,9 +39,17 @@ public class AuthenticationHandler {
         if (challenge == null) return false;
 
         // TODO: Load real public key from DB for the user:
-        BigInteger n = new BigInteger("42000"); // DEBUG
+        // Right now we just store them in a Text file
+        // For testing purposes, we use a hardcoded public key
+        BigInteger n = new BigInteger(
+            "e103abd94892e3e74afd724bf28e78366d9676bccc70118bd0aa1968dbb143d1",
+            16
+        ); // Example public key modulus (n);
+     
+        //BigInteger n = new BigInteger("42000"); // DEBUG
         BigInteger e = new BigInteger("65537");
         BigInteger signature = new BigInteger(signatureHex, 16);
+
 
         boolean valid = cryptoUtils.verifySignature(challenge, signature, n, e);
         authenticatedSessions.put(session, valid);

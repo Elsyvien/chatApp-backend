@@ -65,6 +65,7 @@ public class ChatWebSocket {
                 session.getBasicRemote().sendText("challenge:" + challenge);
                 return;
             }
+            
             if (messageJson.startsWith("auth-response:")) {
                 String[] parts = messageJson.split(":"); // Split by colon
                 String signatureHex = parts[1];
@@ -79,6 +80,9 @@ public class ChatWebSocket {
                     session.getBasicRemote().sendText("auth-failure");
                 }
                 return;
+            }
+            if (messageJson.startsWith("new-user:")) { // Currently not Implemented/Used
+                System.out.println("[SERVER] New user registration request: " + messageJson); 
             }
             if (!authHandler.isAuthenticated(session)) {
                 System.out.println("[SERVER] Unauthorized access attempt from session: " + session.getId());
