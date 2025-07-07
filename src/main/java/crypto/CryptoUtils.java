@@ -7,6 +7,8 @@ package crypto;
  */
 import java.math.BigInteger;
 import java.security.SecureRandom;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 public class CryptoUtils {
     public String generateChallenge() {
@@ -22,12 +24,39 @@ public class CryptoUtils {
     }
 
     public boolean verifySignature(String challenge, BigInteger signature, BigInteger n, BigInteger e) {
-        BigInteger expected = new BigInteger(challenge, 16);
-        BigInteger computed = signature.modPow(e, n);
-        
-        System.out.println("[DEBUG/Crypto] Expected: " + expected.toString(16));
-        System.out.println("[DEBUG/Crypto] Computed: " + computed.toString(16));
+        try {
+            System.out.println("[DEBUG/Crypto] Original challenge: " + challenge);
+            
+            // Convert challenge hex string to bytes
+            byte[] challengeBytes = hexStringToByteArray(challenge);
+            System.out.println("[DEBUG/Crypto] Challenge bytes length: " + challengeBytes.length);
+            
+            // Hash the challenge bytes (same as client does)
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashedChallenge = digest.digest(challengeBytes);
+            BigInteger expected = new BigInteger(1, hashedChallenge);
+            
+            // Verify signature by decrypting it with public key
+            BigInteger computed = signature.modPow(e, n);
+            
+            System.out.println("[DEBUG/Crypto] Expected: " + expected.toString(16));
+            System.out.println("[DEBUG/Crypto] Computed: " + computed.toString(16));
 
-        return expected.equals(computed);
+            return expected.equals(computed);
+        } catch (NoSuchAlgorithmException ex) {
+            System.err.println("[SERVER/Crypto] SHA-256 algorithm not found: " + ex.getMessage());
+            return false;
+        }
+    }
+    
+    // Helper method to convert hex string to byte array
+    private byte[] hexStringToByteArray(String hexString) {
+        int len = hexString.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(hexString.charAt(i), 16) << 4)
+                                + Character.digit(hexString.charAt(i+1), 16));
+        }
+        return data;
     }
 }
