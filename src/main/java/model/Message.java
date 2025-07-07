@@ -31,6 +31,13 @@ public class Message {
         this.timestamp = System.currentTimeMillis();
     }
 
+    public Message(String sender, String content, String recipient, long timestamp) {
+        this.sender = sender;
+        this.content = content;
+        this.recipient = recipient;
+        this.timestamp = System.currentTimeMillis();
+    }
+
     public String getSender() {
         return sender;
     }
