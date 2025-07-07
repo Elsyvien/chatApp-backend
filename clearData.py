@@ -49,7 +49,7 @@ def delete_file(filepath: Path, force: bool = False) -> None:
 
     debug("Deleting file…")
     filepath.unlink()
-    print("🗑️  File deleted.")
+    print("File deleted.")
 
 
 def main() -> None:
