@@ -1,3 +1,4 @@
+/*
 package com.maxstaneker.chatapp.chatappbackend;
 
 import jakarta.servlet.ServletException;
@@ -16,6 +17,18 @@ import java.util.List;
  * ChatServlet handles chat messages sent by users.
  * It allows users to send messages and retrieve the chat history.
  */
+/*
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import model.Message;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 @WebServlet(name = "chatServlet", value = "/chat")
 public class ChatServlet extends HttpServlet {
@@ -56,4 +69,4 @@ public class ChatServlet extends HttpServlet {
         }
         out.println("</body></html>");
     }
-}
+}*/

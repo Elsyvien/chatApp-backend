@@ -81,7 +81,7 @@ public class ChatWebSocket {
                 }
                 return;
             }
-            if (messageJson.startsWith("new-user:")) { // Currently not Implemented/Used
+            if (messageJson.startsWith("new-user:")) { // currently not Implemented/Used
                 System.out.println("[SERVER] New user registration request: " + messageJson); 
             }
             if (!authHandler.isAuthenticated(session)) {
