@@ -1,4 +1,4 @@
-package com.maxstaneker.chatapp.chatappbackend;
+package controller;
 
 import java.io.*;
 

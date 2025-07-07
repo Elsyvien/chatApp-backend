@@ -1,7 +1,6 @@
 package controller;
 
 import jakarta.websocket.*;
-import jakarta.websocket.Session;
 import jakarta.websocket.server.ServerEndpoint;
 
 import jakarta.json.bind.Jsonb;
@@ -20,6 +19,9 @@ import crypto.CryptoUtils;
 import utils.UserDatabase;
 import model.Message;
 import controller.AuthenticationHandler;
+import model.ServerUser;
+import utils.MessageHandler;
+
 /**
  * WebSocket endpoint for broadcasting chat messages between clients.
  *
@@ -116,33 +118,78 @@ public class ChatWebSocket {
                 }
                 return;
             }
-            if (messageJson.startsWith("new-user:")) { // currently not Implemented/Used
+            /*if (messageJson.startsWith("new-user:")) { // currently not Implemented/Used
                 System.out.println("[SERVER] New user registration request: " + messageJson); 
-            }
+            }*/ // Not relevant, implementation has changed
             if (!authHandler.isAuthenticated(session)) {
                 System.out.println("[SERVER] Unauthorized access attempt from session: " + session.getId());
                 session.getBasicRemote().sendText("unauthorized");
                 return;
             }
-            Message message = jsonb.fromJson(messageJson, Message.class);
-            System.out.println("[SERVER] Parsed: sender=" + message.getSender() + ", content=" + message.getContent());
-            Message broadcast = new Message(
-                    message.getSender(),
-                    message.getContent(),
-                    System.currentTimeMillis()
-            );
-            String json = jsonb.toJson(broadcast);
-            System.out.println("[SERVER] SENDING JSON: " + json);
-            for (Session s : sessions) {
-                if (s.isOpen()) {
-                    s.getBasicRemote().sendText(json);
+            // ------------------------------------------------------------- //
+            // Try to parse as JSON message first to check for init-chat in content
+            try {
+                Message message = jsonb.fromJson(messageJson, Message.class);
+                
+                // Check if this is a chat initialization message sent as JSON
+                if (message.getContent() != null && message.getContent().startsWith("init-chat:")) {
+                    String chatPartner = message.getContent().substring("init-chat:".length());
+                    System.out.println("[SERVER] Chat initialization request for: " + chatPartner + " from: " + message.getSender());
+                    
+                    // Register the sender's session for direct messaging
+                    MessageHandler.registerUserSession(message.getSender(), session);
+                    
+                    if (UserDatabase.userExists(chatPartner)) {
+                        session.getBasicRemote().sendText("chat-init-success:" + chatPartner);
+                        System.out.println("[SERVER] Chat initialization successful for: " + chatPartner);
+                    } else {
+                        session.getBasicRemote().sendText("chat-init-failure:User not found");
+                        System.out.println("[SERVER] Chat initialization failed - user not found: " + chatPartner);
+                    }
+                    return;
+                }
+                
+                // Regular message handling
+                System.out.println("[SERVER] Parsed: sender=" + message.getSender() + 
+                                 ", content=" + message.getContent() + 
+                                 ", recipient=" + message.getRecipient());
+                
+                // Register user session for direct messaging
+                MessageHandler.registerUserSession(message.getSender(), session);
+                
+                // Route message based on type
+                if (message.getRecipient() != null && !message.getRecipient().isEmpty()) {
+                    MessageHandler.handleDirectMessage(message, session);
+                } else {
+                    MessageHandler.handleBroadcastMessage(message, sessions);
+                }
+                
+            } catch (Exception jsonException) {
+                // If JSON parsing fails, check for direct init-chat string
+                if (messageJson.startsWith("init-chat:")) {
+                    String chatPartner = messageJson.substring("init-chat:".length());
+                    System.out.println("[SERVER] Direct chat initialization request for: " + chatPartner);
+                    
+                    if (UserDatabase.userExists(chatPartner)) {
+                        session.getBasicRemote().sendText("chat-init-success:" + chatPartner);
+                        System.out.println("[SERVER] Chat initialization successful for: " + chatPartner);
+                    } else {
+                        session.getBasicRemote().sendText("chat-init-failure:User not found");
+                        System.out.println("[SERVER] Chat initialization failed - user not found: " + chatPartner);
+                    }
+                    return;
+                } else {
+                    System.err.println("[SERVER] Failed to parse message as JSON: " + messageJson);
+                    jsonException.printStackTrace();
                 }
             }
-            System.out.println("[SERVER] Broadcasting message: " + broadcast.getContent() + " from " + broadcast.getSender());
+            
         } catch (IOException e) {
+            System.err.println("[SERVER] Error processing message: " + e.getMessage());
             e.printStackTrace();
         }
     }
+
     /**
      * Removes the session from the active session set once the connection is
      * closed.
@@ -152,7 +199,13 @@ public class ChatWebSocket {
     @OnClose
     public void onClose(Session session) {
         sessions.remove(session);
+        MessageHandler.removeUserSession(session);
         authHandler.cleanup(session);
+        
+        // Broadcast updated online users list
+        MessageHandler.broadcastOnlineUsers(sessions);
+        
+        System.out.println("[SERVER] Client disconnected: " + session.getId());
     }
 
     public static Set<Session> getSessions() {

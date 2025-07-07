@@ -4,13 +4,10 @@ package com.maxstaneker.chatapp.chatappbackend;
 import jakarta.servlet.ServletException;
 import model.Message;
 import model.User;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -18,17 +15,10 @@ import java.util.List;
  * It allows users to send messages and retrieve the chat history.
  */
 /*
-import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import model.Message;
 
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.List;
 
 @WebServlet(name = "chatServlet", value = "/chat")
 public class ChatServlet extends HttpServlet {
@@ -69,4 +59,5 @@ public class ChatServlet extends HttpServlet {
         }
         out.println("</body></html>");
     }
-}*/
+}
+*/
