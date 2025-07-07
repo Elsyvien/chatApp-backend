@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import crypto.CryptoUtils;
+import utils.UserDatabase;
 import model.Message;
 import controller.AuthenticationHandler;
 /**
@@ -65,6 +66,41 @@ public class ChatWebSocket {
                 session.getBasicRemote().sendText("challenge:" + challenge);
                 return;
             }
+            
+            if (messageJson.startsWith("check-username:")) {
+                String username = messageJson.substring("check-username:".length());
+                if (UserDatabase.userExists(username)) {
+                    session.getBasicRemote().sendText("username-exists");
+                    System.out.println("[SERVER] Username check - exists: " + username);
+                } else {
+                    session.getBasicRemote().sendText("username-available");
+                    System.out.println("[SERVER] Username check - available: " + username);
+                }
+                return;
+            }
+            
+            if (messageJson.startsWith("register:")) {
+                // Format: register:username:publicKeyN:publicKeyE
+                String[] parts = messageJson.split(":");
+                if (parts.length == 4) {
+                    String username = parts[1];
+                    BigInteger publicKeyN = new BigInteger(parts[2], 16);
+                    BigInteger publicKeyE = new BigInteger(parts[3], 16);
+                    
+                    if (UserDatabase.userExists(username)) {
+                        session.getBasicRemote().sendText("register-failure:User already exists");
+                        System.out.println("[SERVER] Registration failed - user already exists: " + username);
+                    } else {
+                        UserDatabase.registerUser(username, publicKeyN, publicKeyE);
+                        session.getBasicRemote().sendText("register-success");
+                        System.out.println("[SERVER] User registered successfully: " + username);
+                    }
+                } else {
+                    session.getBasicRemote().sendText("register-failure:Invalid format");
+                }
+                return;
+            }
+            
             if (messageJson.startsWith("auth-response:")) {
                 String[] parts = messageJson.split(":"); // Split by colon
                 String signatureHex = parts[1];
@@ -79,6 +115,9 @@ public class ChatWebSocket {
                     session.getBasicRemote().sendText("auth-failure");
                 }
                 return;
+            }
+            if (messageJson.startsWith("new-user:")) { // currently not Implemented/Used
+                System.out.println("[SERVER] New user registration request: " + messageJson); 
             }
             if (!authHandler.isAuthenticated(session)) {
                 System.out.println("[SERVER] Unauthorized access attempt from session: " + session.getId());
