@@ -18,7 +18,7 @@ public class FileOperations {
      * Reads all lines of a file as UTF-8. If the file does not exist,
      * an empty list is returned.
      */
-    public List<String> readAllLines(String filePath) throws IOException {
+    public static List<String> readAllLines(String filePath) throws IOException {
         Path path = Path.of(filePath);
         if (!Files.exists(path)) {
             return new ArrayList<>();
