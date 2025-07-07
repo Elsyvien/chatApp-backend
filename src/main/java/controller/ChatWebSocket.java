@@ -127,39 +127,61 @@ public class ChatWebSocket {
                 return;
             }
             // ------------------------------------------------------------- //
-            if (messageJson.startsWith("init-chat:")) {
-                String chatPartner = messageJson.substring("init-chat:".length());
-                System.out.println("[SERVER] Chat initialization request for: " + chatPartner);
+            // Try to parse as JSON message first to check for init-chat in content
+            try {
+                Message message = jsonb.fromJson(messageJson, Message.class);
                 
-                if (UserDatabase.userExists(chatPartner)) {
-                    session.getBasicRemote().sendText("chat-init-success:" + chatPartner);
-                    System.out.println("[SERVER] Chat initialization successful for: " + chatPartner);
-                } else {
-                    session.getBasicRemote().sendText("chat-init-failure:User not found");
-                    System.out.println("[SERVER] Chat initialization failed - user not found: " + chatPartner);
+                // Check if this is a chat initialization message sent as JSON
+                if (message.getContent() != null && message.getContent().startsWith("init-chat:")) {
+                    String chatPartner = message.getContent().substring("init-chat:".length());
+                    System.out.println("[SERVER] Chat initialization request for: " + chatPartner + " from: " + message.getSender());
+                    
+                    // Register the sender's session for direct messaging
+                    MessageHandler.registerUserSession(message.getSender(), session);
+                    
+                    if (UserDatabase.userExists(chatPartner)) {
+                        session.getBasicRemote().sendText("chat-init-success:" + chatPartner);
+                        System.out.println("[SERVER] Chat initialization successful for: " + chatPartner);
+                    } else {
+                        session.getBasicRemote().sendText("chat-init-failure:User not found");
+                        System.out.println("[SERVER] Chat initialization failed - user not found: " + chatPartner);
+                    }
+                    return;
                 }
-                return;
-            }
-            
-            if (!authHandler.isAuthenticated(session)) {
-                System.out.println("[SERVER] Unauthorized access attempt from session: " + session.getId());
-                session.getBasicRemote().sendText("unauthorized");
-                return;
-            }
-            
-            Message message = jsonb.fromJson(messageJson, Message.class);
-            System.out.println("[SERVER] Parsed: sender=" + message.getSender() + 
-                             ", content=" + message.getContent() + 
-                             ", recipient=" + message.getRecipient());
-            
-            // Register user session for direct messaging
-            MessageHandler.registerUserSession(message.getSender(), session);
-            
-            // Route message based on type
-            if (message.getRecipient() != null && !message.getRecipient().isEmpty()) {
-                MessageHandler.handleDirectMessage(message, session);
-            } else {
-                MessageHandler.handleBroadcastMessage(message, sessions);
+                
+                // Regular message handling
+                System.out.println("[SERVER] Parsed: sender=" + message.getSender() + 
+                                 ", content=" + message.getContent() + 
+                                 ", recipient=" + message.getRecipient());
+                
+                // Register user session for direct messaging
+                MessageHandler.registerUserSession(message.getSender(), session);
+                
+                // Route message based on type
+                if (message.getRecipient() != null && !message.getRecipient().isEmpty()) {
+                    MessageHandler.handleDirectMessage(message, session);
+                } else {
+                    MessageHandler.handleBroadcastMessage(message, sessions);
+                }
+                
+            } catch (Exception jsonException) {
+                // If JSON parsing fails, check for direct init-chat string
+                if (messageJson.startsWith("init-chat:")) {
+                    String chatPartner = messageJson.substring("init-chat:".length());
+                    System.out.println("[SERVER] Direct chat initialization request for: " + chatPartner);
+                    
+                    if (UserDatabase.userExists(chatPartner)) {
+                        session.getBasicRemote().sendText("chat-init-success:" + chatPartner);
+                        System.out.println("[SERVER] Chat initialization successful for: " + chatPartner);
+                    } else {
+                        session.getBasicRemote().sendText("chat-init-failure:User not found");
+                        System.out.println("[SERVER] Chat initialization failed - user not found: " + chatPartner);
+                    }
+                    return;
+                } else {
+                    System.err.println("[SERVER] Failed to parse message as JSON: " + messageJson);
+                    jsonException.printStackTrace();
+                }
             }
             
         } catch (IOException e) {
