@@ -1,7 +1,6 @@
 package controller;
 
 import jakarta.websocket.*;
-import jakarta.websocket.Session;
 import jakarta.websocket.server.ServerEndpoint;
 
 import jakarta.json.bind.Jsonb;
@@ -20,6 +19,9 @@ import crypto.CryptoUtils;
 import utils.UserDatabase;
 import model.Message;
 import controller.AuthenticationHandler;
+import model.ServerUser;
+import utils.MessageHandler;
+
 /**
  * WebSocket endpoint for broadcasting chat messages between clients.
  *
@@ -125,65 +127,46 @@ public class ChatWebSocket {
                 return;
             }
             // ------------------------------------------------------------- //
-            // Direct Messaging Implementation, checking if the message is directed to a specific user
-            if (messageJson.startsWith("init-chat:")) { 
+            if (messageJson.startsWith("init-chat:")) {
                 String chatPartner = messageJson.substring("init-chat:".length());
-                System.out.println("[SERVER] Initializing chat with: " + chatPartner);
+                System.out.println("[SERVER] Chat initialization request for: " + chatPartner);
                 
-                if (UserDatabase.userExists(chatPartner)) { // Check if the user exists
+                if (UserDatabase.userExists(chatPartner)) {
                     session.getBasicRemote().sendText("chat-init-success:" + chatPartner);
-                    System.out.println("[SERVER] Chat initialized with: " + chatPartner);
+                    System.out.println("[SERVER] Chat initialization successful for: " + chatPartner);
                 } else {
-                    session.getBasicRemote().sendText("chat-init-failure:User does not exist");
-                    System.out.println("[SERVER] Chat initialization failed - user does not exist: " + chatPartner);
+                    session.getBasicRemote().sendText("chat-init-failure:User not found");
+                    System.out.println("[SERVER] Chat initialization failed - user not found: " + chatPartner);
                 }
                 return;
             }
-        
-            if (!authHandler.isAuthenticated(session)) { // Check if the session is authenticated
-                System.out.println("[SERVER] Unauthorized access attempt from session: " + session.getId() + " for direct messaging");
+            
+            if (!authHandler.isAuthenticated(session)) {
+                System.out.println("[SERVER] Unauthorized access attempt from session: " + session.getId());
                 session.getBasicRemote().sendText("unauthorized");
                 return;
             }
-
-            Message message = jsonb.fromJson(messageJson, Message.class); // Deserialize the JSON to a Message object
-            System.out.println("[SERVER] Parsed: sender=" + message.getSender() + ", content=" + message.getContent() + ", recipient=" + message.getRecipient());
-
-            sessions.add(session); // Ensure the session is added to the active sessions
+            
+            Message message = jsonb.fromJson(messageJson, Message.class);
+            System.out.println("[SERVER] Parsed: sender=" + message.getSender() + 
+                             ", content=" + message.getContent() + 
+                             ", recipient=" + message.getRecipient());
+            
+            // Register user session for direct messaging
+            MessageHandler.registerUserSession(message.getSender(), session);
+            
+            // Route message based on type
             if (message.getRecipient() != null && !message.getRecipient().isEmpty()) {
-                handleDirectMessage(message, session);
+                MessageHandler.handleDirectMessage(message, session);
             } else {
-                handleBroadcastMessage(message);
-                }
-            } 
-        catch (IOException e) {
-                System.err.println("[SERVER] Error processing message: " + e.getMessage());
-                e.printStackTrace();
+                MessageHandler.handleBroadcastMessage(message, sessions);
+            }
+            
+        } catch (IOException e) {
+            System.err.println("[SERVER] Error processing message: " + e.getMessage());
+            e.printStackTrace();
         }
     }
-
-
-            // @Deprecated This part is for broadcasting messages to all connected clients, will be refactored in the future
-            /*Message message = jsonb.fromJson(messageJson, Message.class); // Deserialize the JSON to a Message object
-            System.out.println("[SERVER] Parsed: sender=" + message.getSender() + ", content=" + message.getContent());
-            Message broadcast = new Message(
-                    message.getSender(),
-                    message.getContent(),
-                    System.currentTimeMillis()
-            );
-            String json = jsonb.toJson(broadcast);
-            System.out.println("[SERVER] SENDING JSON: " + json);
-            for (Session s : sessions) {
-                if (s.isOpen()) {
-                    s.getBasicRemote().sendText(json);
-                }
-            }
-            System.out.println("[SERVER] Broadcasting message: " + broadcast.getContent() + " from " + broadcast.getSender());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }/*
-    }
-
 
     /**
      * Removes the session from the active session set once the connection is
@@ -194,7 +177,13 @@ public class ChatWebSocket {
     @OnClose
     public void onClose(Session session) {
         sessions.remove(session);
+        MessageHandler.removeUserSession(session);
         authHandler.cleanup(session);
+        
+        // Broadcast updated online users list
+        MessageHandler.broadcastOnlineUsers(sessions);
+        
+        System.out.println("[SERVER] Client disconnected: " + session.getId());
     }
 
     public static Set<Session> getSessions() {
