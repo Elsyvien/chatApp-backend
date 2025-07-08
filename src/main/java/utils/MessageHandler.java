@@ -44,12 +44,12 @@ public class MessageHandler {
             }
         }
             
-            // Create timestamped message
-            Message directMessage = new Message(
-                message.getSender(),
-                message.getContent(),
-                message.getRecipient()
-            );
+        // Create timestamped message
+        Message directMessage = new Message(
+            message.getSender(),
+            message.getContent(),
+            message.getRecipient()
+        );
         
         String json = jsonb.toJson(directMessage);
         System.out.println("[MESSAGE HANDLER] SENDING DIRECT MESSAGE JSON: " + json);
@@ -64,6 +64,7 @@ public class MessageHandler {
         } else {
             // Recipient is offline
             System.out.println("[MESSAGE HANDLER] Recipient " + recipient + " is offline. Message not delivered.");
+            System.out.println("[MESSAGE HANDLER] Currently online users: " + userSessions.keySet());
             senderSession.getBasicRemote().sendText("message-failed:Recipient offline");
             
             // TODO: Store message for later delivery (optional)
@@ -106,7 +107,8 @@ public class MessageHandler {
      */
     public static void registerUserSession(String username, Session session) {
         userSessions.put(username, session);
-        System.out.println("[MESSAGE HANDLER] User session registered: " + username);
+        System.out.println("[MESSAGE HANDLER] User session registered: " + username + " (Session: " + session.getId() + ")");
+        System.out.println("[MESSAGE HANDLER] Total online users: " + userSessions.keySet());
     }
     
     /**

@@ -111,6 +111,10 @@ public class ChatWebSocket {
                 boolean valid = authHandler.verifySignature(session, signatureHex, username);
                 if (valid) {
                     System.out.println("[SERVER] Authentication successful for user: " + username);
+                    
+                    // Register user session immediately after successful authentication
+                    MessageHandler.registerUserSession(username, session);
+                    
                     session.getBasicRemote().sendText("auth-success");
                 } else {
                     System.out.println("[SERVER] Authentication failed for user: " + username);
