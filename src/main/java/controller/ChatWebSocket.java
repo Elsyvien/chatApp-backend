@@ -122,6 +122,12 @@ public class ChatWebSocket {
                     
                     // Send current online users list directly to the newly authenticated user 
                     // (now includes the new user since they're registered)
+                    try {
+                        Thread.sleep(500); // Short delay to ensure session is fully registered
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        System.err.println("[SERVER] Interrupted during sleep: " + e.getMessage());
+                    }
                     MessageHandler.sendOnlineUsersToSession(session);
                     
                     // Then broadcast updated online users list to all other clients
