@@ -225,7 +225,7 @@ public class UserDatabase {
     }
     
     /**
-     * Get all registered usernames (for debugging)
+     * Get all registered usernames used for viewing who is currently online
      */
     public static String[] getAllUsernames() {
         return usernameToKeyId.keySet().toArray(new String[0]);

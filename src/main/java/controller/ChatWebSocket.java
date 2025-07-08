@@ -48,6 +48,9 @@ public class ChatWebSocket {
         session.setMaxIdleTimeout(0); // 0 = keine Idle-Timeouts
         authHandler.initializeSession(session); // Initialize authentication for the session
         System.out.println("[SERVER] Client connected: " + session.getId());
+        // Broadcast updated online users list
+        MessageHandler.broadcastOnlineUsers(sessions);
+        System.out.println("[SERVER] Active sessions: " + sessions.size());
     }
 
     /**
@@ -114,6 +117,9 @@ public class ChatWebSocket {
                     
                     // Register user session immediately after successful authentication
                     MessageHandler.registerUserSession(username, session);
+                    
+                    // Broadcast updated online users list to all clients
+                    MessageHandler.broadcastOnlineUsers(sessions);
                     
                     session.getBasicRemote().sendText("auth-success");
                 } else {
