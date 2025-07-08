@@ -127,9 +127,28 @@ public class ChatWebSocket {
                 return;
             }
             // ------------------------------------------------------------- //
-            // Try to parse as JSON message first to check for init-chat in content
+            // Try to parse as JSON message first to check for special commands in content
             try {
                 Message message = jsonb.fromJson(messageJson, Message.class);
+                
+                // Handle public key requests
+                if (message.getContent() != null && message.getContent().startsWith("get-public-key:")) {
+                    String requestedUsername = message.getContent().substring("get-public-key:".length());
+                    System.out.println("[SERVER] Public key request for: " + requestedUsername + " from: " + message.getSender());
+                    
+                    ServerUser requestedUser = UserDatabase.getUser(requestedUsername);
+                    if (requestedUser != null) {
+                        String response = "public-key:" + requestedUsername + ":" + 
+                            requestedUser.getPublicKeyN().toString(16) + ":" + 
+                            requestedUser.getPublicKeyE().toString(16);
+                        session.getBasicRemote().sendText(response);
+                        System.out.println("[SERVER] Public key sent for: " + requestedUsername);
+                    } else {
+                        session.getBasicRemote().sendText("public-key-not-found:" + requestedUsername);
+                        System.out.println("[SERVER] Public key not found for: " + requestedUsername);
+                    }
+                    return;
+                }
                 
                 // Check if this is a chat initialization message sent as JSON
                 if (message.getContent() != null && message.getContent().startsWith("init-chat:")) {
@@ -142,6 +161,16 @@ public class ChatWebSocket {
                     if (UserDatabase.userExists(chatPartner)) {
                         session.getBasicRemote().sendText("chat-init-success:" + chatPartner);
                         System.out.println("[SERVER] Chat initialization successful for: " + chatPartner);
+                        
+                        // Automatically send public key of chat partner
+                        ServerUser chatPartnerUser = UserDatabase.getUser(chatPartner);
+                        if (chatPartnerUser != null) {
+                            String keyResponse = "public-key:" + chatPartner + ":" + 
+                                chatPartnerUser.getPublicKeyN().toString(16) + ":" + 
+                                chatPartnerUser.getPublicKeyE().toString(16);
+                            session.getBasicRemote().sendText(keyResponse);
+                            System.out.println("[SERVER] Auto-sent public key for chat partner: " + chatPartner);
+                        }
                     } else {
                         session.getBasicRemote().sendText("chat-init-failure:User not found");
                         System.out.println("[SERVER] Chat initialization failed - user not found: " + chatPartner);
