@@ -115,13 +115,17 @@ public class ChatWebSocket {
                 if (valid) {
                     System.out.println("[SERVER] Authentication successful for user: " + username);
                     
+                    session.getBasicRemote().sendText("auth-success");
+                    
                     // Register user session immediately after successful authentication
                     MessageHandler.registerUserSession(username, session);
                     
-                    // Broadcast updated online users list to all clients
-                    MessageHandler.broadcastOnlineUsers(sessions);
+                    // Send current online users list directly to the newly authenticated user 
+                    // (now includes the new user since they're registered)
+                    MessageHandler.sendOnlineUsersToSession(session);
                     
-                    session.getBasicRemote().sendText("auth-success");
+                    // Then broadcast updated online users list to all other clients
+                    MessageHandler.broadcastOnlineUsers(sessions);
                 } else {
                     System.out.println("[SERVER] Authentication failed for user: " + username);
                     session.getBasicRemote().sendText("auth-failure");

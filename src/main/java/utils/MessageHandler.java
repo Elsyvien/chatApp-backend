@@ -142,6 +142,25 @@ public class MessageHandler {
     }
     
     /**
+     * Sends list of online users to a specific session
+     * @param session the session to send the list to
+     */
+    public static void sendOnlineUsersToSession(Session session) {
+        try {
+            Set<String> onlineUsers = userSessions.keySet();
+            String userListJson = jsonb.toJson(onlineUsers);
+            String message = "online-users:" + userListJson;
+            
+            if (session.isOpen()) {
+                session.getBasicRemote().sendText(message);
+                System.out.println("[MESSAGE HANDLER] Online users list sent to session " + session.getId() + ": " + onlineUsers);
+            }
+        } catch (IOException e) {
+            System.err.println("[MESSAGE HANDLER] Failed to send online users to session: " + e.getMessage());
+        }
+    }
+    
+    /**
      * Gets a user's session by username
      * @param username the username
      * @return the session or null if not found
