@@ -23,7 +23,7 @@ public class Message {
         this.timestamp = timestamp;
     }
 
-    // Constructor with User to send message to
+    // Constructor with User to send a message to
     public Message(String sender, String content, String recipient) {
         this.sender = sender;
         this.content = content;
