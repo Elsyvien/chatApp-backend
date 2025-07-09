@@ -121,6 +121,20 @@ def delete_file(filepath: Path, force: bool = False) -> None:
     print("File deleted.")
 
 
+def create_empty_properties_file(properties_path: Path) -> None:
+    """Erstellt eine leere userDatabase.properties-Datei im Standardpfad, falls sie nicht existiert."""
+    if properties_path.exists():
+        debug(f"Properties-Datei existiert bereits: {properties_path}")
+        return
+    try:
+        properties_path.parent.mkdir(parents=True, exist_ok=True)
+        with properties_path.open("w", encoding="utf-8") as f:
+            f.write("# Leere userDatabase.properties Datei\n")
+        debug(f"Leere Properties-Datei erstellt: {properties_path}")
+    except Exception as e:
+        print(f"Fehler beim Erstellen der Properties-Datei: {e}")
+
+
 def main() -> None:
     default_path = (Path.home() / "libraries" / "apache-tomcat-10.1.41" / "bin" / "data" /
                     "userDatabase.properties")
@@ -133,8 +147,13 @@ def main() -> None:
     parser.add_argument("--force", action="store_true", help="Skip confirmation prompts")
     parser.add_argument("-f", "--file", type=Path, default=default_path,
                         help="Path to userDatabase.properties (default: %(default)s)")
+    parser.add_argument('--init-db', action='store_true', help='Leere userDatabase.properties im Standardpfad anlegen')
 
     args = parser.parse_args()
+
+    if args.init_db:
+        create_empty_properties_file(default_path)
+        return
 
     # Ensure exactly one action is chosen.
     actions = [args.read, args.read_keys, args.delete]
